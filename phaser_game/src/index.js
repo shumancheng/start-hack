@@ -17,6 +17,7 @@ import hills from "./assets/hills.png";
 import egg from "./assets/egg.png";
 import grassEgg from "./assets/grass-egg.png";
 import explanation from "./explanations.json"
+import rain from "./assets/rain.png"
 
 const config = {
   type: Phaser.AUTO,
@@ -55,21 +56,19 @@ insertNewlines(explanation["Tierhaltung"]["text"], char_limit)
 let curr_explanation = 0
 
 const gameState = {
+  rain: true,
   explanation: "",
   speech_text: "",
   speech_img: null,
   numCrops: 0,
   numEggs: 0,
   initialTime: 0,
-  stageOne: dirt,
-  stageTwo: seeds,
-  stageThree: sprout,
   first_times: [true, true, true, true, true] //spawn, plant, water, crop, egg
 }
 
 
-
 function preload() {
+  this.load.image("rain", rain)
   this.load.image("bubble", bubble)
   this.load.image("farmBackground", farmbg);
   this.load.spritesheet("witch", witch, { frameWidth: 96, frameHeight: 128 });
@@ -89,12 +88,42 @@ function preload() {
   this.load.image('grassEgg', grassEgg);
 }
 
+
 function create() {
-  //gamedesign
+  if (gameState.rain) {
+    let maskGraphics = this.add.graphics().setDepth(9999);
+    maskGraphics.fillStyle(0xffffff); // Fill color of the mask, white in this case
+    maskGraphics.fillRect(0, 0, 700, 800);
+    maskGraphics.invertAlpha = true;
+
+    let particles = this.add.particles('rain');
+    particles.setMask(new Phaser.Display.Masks.GeometryMask(this, maskGraphics));
+    maskGraphics.visible = false;
+
+    let emitter = particles.createEmitter({
+      x: { min: 0, max: this.cameras.main.width },
+      y: 0,
+      speedX: { min: -5, max: 5 },
+      speedY: { min: 500, max: 7500 },
+      scale: { start: 0.5, end: 2 },
+      lifespan: 1600,
+      quantity: 10,
+      rotate: 0,
+      frequency: 50
+    });
+
+
+
+    let darkOverlay = this.add.graphics().setDepth(9998);
+    darkOverlay.fillStyle(0x000000, 0.5);
+    darkOverlay.fillRect(0, 0, 700, 800);
+    particles.setDepth(9999);
+  }
+
+
+
   let background = this.add.image(352, window.innerHeight / 2, "farmBackground");
 
-  // var platforms = this.physics.add.staticGroup();
-  // platforms.create(200, 352, 'farmBackground');
   gameState.explanation = this.add.text(1050, 40, explanations[curr_explanation])
   gameState.speech_img = this.add.image(0, 0, "bubble")
   gameState.speech_img.setScale(0.2)
@@ -258,8 +287,6 @@ function create() {
 
 
 function update() {
-  gameState.speech_text.bringToTop
-  gameState.speech_img.bringToTop
 
 
   //plant logic
@@ -298,8 +325,8 @@ function update() {
   }
 
   //update totals
-  gameState.cropText.setText('Crop Total:' + gameState.numCrops);
-  gameState.eggText.setText('Egg Total:' + gameState.numEggs);
+  gameState.cropText.setText('Ernte Anzahl:' + gameState.numCrops);
+  gameState.eggText.setText('Eier Anzahl:' + gameState.numEggs);
 
 
   gameState.chickenSprite.anims.play('chickenMove', true);
