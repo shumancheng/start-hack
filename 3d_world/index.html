@@ -64,6 +64,37 @@
             renderer.render(scene, camera);
         }
 
+        function onClick(event) {
+            event.preventDefault();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            var intersects = raycaster.intersectObjects([earthMesh]);
+
+            if (intersects.length > 0) {
+                var x = intersects[0].point.x;
+                var y = intersects[0].point.y;
+                var z = intersects[0].point.z;
+
+                // Convert the position to spherical coordinates
+                var radiusLongitude = Math.sqrt(x * x + z * z);
+                var radius = Math.sqrt(x * x + y * y + z * z);
+
+                var polarAngle = Math.acos(y / radius); // theta
+                var azimuthalAngle = Math.acos(x / radiusLongitude); // phi
+
+                if (z < 0) {
+                    azimuthalAngle = -azimuthalAngle;
+                }
+
+                var latitude = 90 - (polarAngle * 180 / Math.PI);
+                var longitude = azimuthalAngle * 180 / Math.PI;
+
+                console.log(`Lat: ${latitude}, Lon: ${longitude}`);
+            }
+        }
+
 
 
         function onWindowResize() {
