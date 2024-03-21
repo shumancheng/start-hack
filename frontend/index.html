@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Map</title>
+</head>
+<body>
+  <div class="white-bar"><img src="../frontend/img/Syngenta_Logo.svg.png" alt="Company Logo" width="120"></div>
+  <h1>Location</h1>
+  <div class="background-img">
+    <div class="game-area">
+      <div class="Garden">
+        <div class="field" data-field-info="You should know that vegetation’s spectral reflectance across different bands measured by the sensor serves as an indicator of the presence of plants or trees and their overall state. So, VI is a mathematical combination of two or more such spectral bands that enhances the contrast between vegetation (having high reflectance) and bare soil, manmade structures, etc. as well as quantifies plant’s characteristics, such as biomass, vigor, density, etc.
+        There are over a hundred indices for vegetation analysis; to learn more,">
+            <img src="../frontend/img/field.png" width="500">
+          </div>
+          <div class="plant-area"><!-- dynamically create plants here --></div>
+      </div>
+      <div class="tools">
+          <button class="tool" data-action="water">Water</button>
+          <button class="tool" data-action="pesticide">Pesticide</button>
+          <!-- Add other tools as per your need -->
+      </div>
+    </div>
+    <!--<div class="seeds">
+        <button class="seed" data-plant="rose">Rose</button>
+        <button class="seed" data-plant="tulip">Tulip</button>-->
+        <!-- Add other seeds as per your need -->
+    </div>
+  </div>
+<script src="app.js"></script>
+</body>
+</html>
