@@ -19,11 +19,17 @@ import grassEgg from "./assets/grass-egg.png";
 import explanation from "./explanations.json"
 import rain from "./assets/rain.png"
 
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight
+}
+
+
 const config = {
   type: Phaser.AUTO,
   parent: "game",
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: sizes.width,
+  height: sizes.height,
   physics: {
     default: 'arcade',
     arcade: {
@@ -158,7 +164,7 @@ function create() {
   this.anims.create({
     key: "chickenMove",
     frames: this.anims.generateFrameNumbers("chicken", { start: 0, end: 2 }),
-    frameRate: 5,
+    frameRate: 6,
     repeat: -1
   })
 
