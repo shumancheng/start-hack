@@ -18,11 +18,17 @@ import egg from "./assets/egg.png";
 import grassEgg from "./assets/grass-egg.png";
 import explanation from "./explanations.json"
 
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight
+}
+
+
 const config = {
   type: Phaser.AUTO,
   parent: "game",
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: sizes.width,
+  height: sizes.height,
   physics: {
     default: 'arcade',
     arcade: {
@@ -90,6 +96,16 @@ function preload() {
 }
 
 function create() {
+  
+  window.addEventListener('resize', () =>
+  {
+      // Update sizes
+      config.width = sizes.width
+      config.height = sizes.height 
+      console.log(window.innerHeight, window.innerWidth)
+  })
+
+
   //gamedesign
   let background = this.add.image(352, window.innerHeight / 2, "farmBackground");
 
@@ -129,7 +145,7 @@ function create() {
   this.anims.create({
     key: "chickenMove",
     frames: this.anims.generateFrameNumbers("chicken", { start: 0, end: 2 }),
-    frameRate: 5,
+    frameRate: 6,
     repeat: -1
   })
 
