@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import bubble from "./assets/speech_bubble.png"
 import farmbg from "./assets/background-image.png";
 import witch from "./assets/farmer-walk.png";
 import dirt from "./assets/grow/dirt.png";
@@ -15,12 +16,20 @@ import scythe from "./assets/scythe.png";
 import hills from "./assets/hills.png";
 import egg from "./assets/egg.png";
 import grassEgg from "./assets/grass-egg.png";
+import explanation from "./explanations.json"
+import rain from "./assets/rain.png"
+
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight
+}
+
 
 const config = {
   type: Phaser.AUTO,
   parent: "game",
-  width: 1024,
-  height: 704,
+  width: sizes.width,
+  height: sizes.height,
   physics: {
     default: 'arcade',
     arcade: {
@@ -34,23 +43,39 @@ const config = {
   }
 };
 
-// var timerText;
-var timerEvent;
-const game = new Phaser.Game(config);
+function insertNewlines(string, every = 10) {
+  let lines = [];
+  for (let i = 0; i < string.length; i += every) {
+    lines.push(string.substring(i, i + every));
+  }
+  return lines.join('\n');
+}
 
+let timerEvent;
+const char_limit = 40;
+const game = new Phaser.Game(config);
+const explanations = [insertNewlines(explanation["Samen"]["text"], char_limit),
+insertNewlines(explanation["Ernte"]["text"], char_limit),
+insertNewlines(explanation["Wasser"]["text"], char_limit),
+insertNewlines(explanation["Tierhaltung"]["text"], char_limit)
+]
+let curr_explanation = 0
 
 const gameState = {
+  rain: true,
+  explanation: "",
+  speech_text: "",
+  speech_img: null,
   numCrops: 0,
   numEggs: 0,
   initialTime: 0,
-  stageOne: dirt,
-  stageTwo: seeds,
-  stageThree: sprout,
+  first_times: [true, true, true, true, true] //spawn, plant, water, crop, egg
 }
 
 
-
 function preload() {
+  this.load.image("rain", rain)
+  this.load.image("bubble", bubble)
   this.load.image("farmBackground", farmbg);
   this.load.spritesheet("witch", witch, { frameWidth: 96, frameHeight: 128 });
   this.load.image("sprout", sprout);
@@ -69,15 +94,52 @@ function preload() {
   this.load.image('grassEgg', grassEgg);
 }
 
+
 function create() {
-  //gamedesign
-  let background = this.add.image(352, 352, "farmBackground");
+  if (gameState.rain) {
+    let maskGraphics = this.add.graphics().setDepth(9999);
+    maskGraphics.fillStyle(0xffffff); // Fill color of the mask, white in this case
+    maskGraphics.fillRect(0, 0, 700, 800);
+    maskGraphics.invertAlpha = true;
 
-  // var platforms = this.physics.add.staticGroup();
-  // platforms.create(200, 352, 'farmBackground');
+    let particles = this.add.particles('rain');
+    particles.setMask(new Phaser.Display.Masks.GeometryMask(this, maskGraphics));
+    maskGraphics.visible = false;
 
+    let emitter = particles.createEmitter({
+      x: { min: 0, max: this.cameras.main.width },
+      y: 0,
+      speedX: { min: -5, max: 5 },
+      speedY: { min: 500, max: 7500 },
+      scale: { start: 0.5, end: 2 },
+      lifespan: 1600,
+      quantity: 10,
+      rotate: 0,
+      frequency: 50
+    });
+
+
+
+    let darkOverlay = this.add.graphics().setDepth(9998);
+    darkOverlay.fillStyle(0x000000, 0.5);
+    darkOverlay.fillRect(0, 0, 700, 800);
+    particles.setDepth(9999);
+  }
+
+
+
+  let background = this.add.image(352, window.innerHeight / 2, "farmBackground");
+
+  gameState.explanation = this.add.text(1050, 40, explanations[curr_explanation])
+  gameState.speech_img = this.add.image(0, 0, "bubble")
+  gameState.speech_img.setScale(0.2)
+  gameState.speech_img.setDepth(1);
+  gameState.speech_text = this.add.text(0, 0, "", { fontSize: '30px', fill: '#000000' })
+  gameState.speech_text.setDepth(1);
   gameState.cropText = this.add.text(760, 620, 'Crop Total:' + gameState.numCrops, { fontSize: '30px', fill: '#FFFFFF' });
   gameState.eggText = this.add.text(760, 650, 'Egg Total:' + gameState.numEggs, { fontSize: '30px', fill: '#FFFFFF' });
+
+
 
   gameState.seedButton = this.add.image(864, 100, "seeds");
   gameState.seedButton.setScale(2);
@@ -97,10 +159,12 @@ function create() {
   this.physics.add.collider(gameState.witchSprite);
   gameState.cursors = this.input.keyboard.createCursorKeys();
 
+
+
   this.anims.create({
     key: "chickenMove",
     frames: this.anims.generateFrameNumbers("chicken", { start: 0, end: 2 }),
-    frameRate: 5,
+    frameRate: 6,
     repeat: -1
   })
 
@@ -158,6 +222,11 @@ function create() {
   gameState.eggTile.setInteractive();
   gameState.eggTile.on('pointerup', function () {
     if (gameState.eggTile.texture.key === "egg") {
+      if (gameState.first_times[4] && !gameState.first_times[3]) {
+        curr_explanation = 4
+        gameState.speech_text.setText("!")
+        gameState.first_times[4] = false;
+      }
       gameState.numEggs += 1;
       gameState.eggTile.setTexture("grassEgg");
     }
@@ -165,6 +234,12 @@ function create() {
 
   gameState.waterButton.setInteractive();
   gameState.waterButton.on('pointerup', function () {
+    if (gameState.first_times[1] && !gameState.first_times[2]) {
+      curr_explanation = 1
+      gameState.speech_text.setText("die")
+      gameState.first_times[1] = false;
+    }
+
     gameState.waterButton.setTint(0x6EBF9C);
     gameState.seedButton.clearTint();
     gameState.scytheButton.clearTint();
@@ -172,6 +247,11 @@ function create() {
 
   gameState.seedButton.setInteractive();
   gameState.seedButton.on('pointerup', function () {
+    if (gameState.first_times[2]) {
+      curr_explanation = 2
+      gameState.speech_text.setText("an")
+      gameState.first_times[2] = false;
+    }
     gameState.seedButton.setTint(0x6EBF9C);
     gameState.waterButton.clearTint()
     gameState.scytheButton.clearTint();
@@ -179,6 +259,11 @@ function create() {
 
   gameState.scytheButton.setInteractive();
   gameState.scytheButton.on('pointerup', function () {
+    if (gameState.first_times[3] && !gameState.first_times[1]) {
+      curr_explanation = 3
+      gameState.speech_text.setText("Umwelt")
+      gameState.first_times[3] = false;
+    }
     gameState.scytheButton.setTint(0x6EBF9C);
     gameState.waterButton.clearTint()
     gameState.seedButton.clearTint();
@@ -208,6 +293,8 @@ function create() {
 
 
 function update() {
+
+
   //plant logic
   for (let i = 0; i < 14; i++) {
     //watering
@@ -244,8 +331,8 @@ function update() {
   }
 
   //update totals
-  gameState.cropText.setText('Crop Total:' + gameState.numCrops);
-  gameState.eggText.setText('Egg Total:' + gameState.numEggs);
+  gameState.cropText.setText('Ernte Anzahl:' + gameState.numCrops);
+  gameState.eggText.setText('Eier Anzahl:' + gameState.numEggs);
 
 
   gameState.chickenSprite.anims.play('chickenMove', true);
@@ -282,4 +369,20 @@ function update() {
   } else {
     gameState.witchSprite.anims.stop();
   }
+
+  //Speech:
+  gameState.speech_text.x = gameState.witchSprite.x - 30
+  gameState.speech_text.y = gameState.witchSprite.y - 100
+  gameState.speech_img.x = gameState.witchSprite.x + 20
+  gameState.speech_img.y = gameState.witchSprite.y - 80
+
+
+
+  if (gameState.first_times[0]) {
+    gameState.speech_text.setText("Denke")
+    gameState.first_times[0] = false;
+  }
+
+
+  gameState.explanation.setText(explanations[curr_explanation])
 }
