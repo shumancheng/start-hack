@@ -117,13 +117,21 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    for(let forecast of data) {
-                        console.log(`Date: ${forecast.date}`);
-                        console.log(`Measure: ${forecast.measureLabel}`);
-                    }
-                })
-                .catch(error => console.log('Error:', error));
-            }
+                    data.forEach(({measureLabel, dailyValue}) => {
+                        if (measureLabel == "HumidityRel_DailyAvg (pct)") {
+                            console.log(`Humidity: ${dailyValue}`);
+                            gameState.humidity = dailyValue;
+                            window.humidity = dailyValue;
+                            localStorage.setItem('humidity', dailyValue);
+                        } 
+                        else if (measureLabel == "WindSpeed_DailyAvg (m/s)") {
+                            console.log(`Wind Speed: ${dailyValue}`);
+                            gameState.windSpeed = dailyValue;
+                            window.windSpeed = dailyValue;
+                            localStorage.setItem('windSpeed', dailyValue);
+                        }
+                    });
+                })}
         }
     
 

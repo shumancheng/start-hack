@@ -16,8 +16,10 @@ import scythe from "./assets/scythe.png";
 import hills from "./assets/hills.png";
 import egg from "./assets/egg.png";
 import grassEgg from "./assets/grass-egg.png";
-import explanation from "./explanations.json"
-import rain from "./assets/rain.png"
+import explanation from "./explanations.json";
+import rain from "./assets/rain.png";
+import humidity from "./assets/humidity.png";
+import wind from "./assets/wind.png";
 
 const sizes = {
   width: window.innerWidth,
@@ -69,7 +71,9 @@ const gameState = {
   numCrops: 0,
   numEggs: 0,
   initialTime: 0,
-  first_times: [true, true, true, true, true] //spawn, plant, water, crop, egg
+  first_times: [true, true, true, true, true], //spawn, plant, water, crop, egg
+  humidity: 0,
+  windSpeed: 0
 }
 
 
@@ -92,6 +96,8 @@ function preload() {
   this.load.image('hills', hills);
   this.load.image('egg', egg);
   this.load.image('grassEgg', grassEgg);
+  this.load.image('humidityImage', humidity);
+  this.load.image('windSpeedImage', wind);
 }
 
 
@@ -115,15 +121,32 @@ function create() {
       lifespan: 1600,
       quantity: 10,
       rotate: 0,
-      frequency: 50
+      frequency: 50,
     });
 
+    if (localStorage.getItem('humidity')) {
+      gameState.humidity = localStorage.getItem('humidity');
+    }
+    
+    if (localStorage.getItem('windSpeed')) {
+      gameState.windSpeed = localStorage.getItem('windSpeed');
+    }
 
+    gameState.humidity = localStorage.getItem('humidity');
+    gameState.windSpeed = localStorage.getItem('windSpeed');
+      
+    
+// Adjust the x-coordinate to move the images to the right
+gameState.humidityImage = this.add.image(760, 720, 'humidityImage').setScale(0.5);
+gameState.windSpeedImage = this.add.image(760, 770, 'windSpeedImage').setScale(0.5);
 
-    let darkOverlay = this.add.graphics().setDepth(9998);
-    darkOverlay.fillStyle(0x000000, 0.5);
-    darkOverlay.fillRect(0, 0, 700, 800);
-    particles.setDepth(9999);
+// Also adjust the x-coordinate of the text
+gameState.humidityText = this.add.text(790, 700, `Humidity: ${gameState.humidity}`, { fontSize: '30px', fill: '#FFFFFF' });
+gameState.windSpeedText = this.add.text(790, 750, `Wind Speed: ${gameState.windSpeed}`, { fontSize: '30px', fill: '#FFFFFF' });
+        let darkOverlay = this.add.graphics().setDepth(9998);
+        darkOverlay.fillStyle(0x000000, 0.5);
+        darkOverlay.fillRect(0, 0, 700, 800);
+        particles.setDepth(9999);
   }
 
 
@@ -385,4 +408,7 @@ function update() {
 
 
   gameState.explanation.setText(explanations[curr_explanation])
+
+  gameState.humidityText.setText('Humidity:' + gameState.humidity);
+  gameState.windSpeedText.setText('Wind Speed:' + gameState.windSpeed);
 }
