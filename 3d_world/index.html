@@ -16,6 +16,7 @@
 </head>
 
 <body>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script type="module">
         // Since OrbitControls is an ES6 module, we import it at the top
@@ -63,6 +64,68 @@
             controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
             renderer.render(scene, camera);
         }
+
+        function onClick(event) {
+            event.preventDefault();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            var intersects = raycaster.intersectObjects([earthMesh]);
+
+            if (intersects.length > 0) {
+                var x = intersects[0].point.x;
+                var y = intersects[0].point.y;
+                var z = intersects[0].point.z;
+
+                // Convert the position to spherical coordinates
+                var radiusLongitude = Math.sqrt(x * x + z * z);
+                var radius = Math.sqrt(x * x + y * y + z * z);
+
+                var polarAngle = Math.acos(y / radius); // theta
+                var azimuthalAngle = Math.acos(x / radiusLongitude); // phi
+
+                if (z < 0) {
+                    azimuthalAngle = -azimuthalAngle;
+                }
+
+                var latitude = 90 - (polarAngle * 180 / Math.PI);
+                var longitude = azimuthalAngle * 180 / Math.PI;
+
+                console.log(`Lat: ${latitude}, Lon: ${longitude}`);
+
+                // Saving coordinates to local storage
+                localStorage.setItem("latitude", latitude);
+                localStorage.setItem("longitude", longitude);
+                window.location.href = 'http://localhost:8080/';
+                
+                var latitude = Math.round(localStorage.getItem("latitude"));
+                var longitude = Math.round(localStorage.getItem("longitude"));
+
+                
+                console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
+                // https://services.cehub.syngenta-ais.com/api/Forecast/ShortRangeForecastDaily?latitude=51&longitude=10&supplier=Meteoblue&top=20&format=json
+
+                var apiUrl = 'https://services.cehub.syngenta-ais.com/api/Forecast/ShortRangeForecastDaily';
+
+                console.log('Starting fetch request');
+                fetch(`${apiUrl}?latitude=${latitude}&longitude=${longitude}&supplier=Meteoblue&top=20&format=json`, {
+                    headers: {
+                    'accept': '*/*',
+                    'ApiKey': 'a4076314-f634-47b5-8d48-50798afb0648' 
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    for(let forecast of data) {
+                        console.log(`Date: ${forecast.date}`);
+                        console.log(`Measure: ${forecast.measureLabel}`);
+                    }
+                })
+                .catch(error => console.log('Error:', error));
+            }
+        }
+    
 
 
 
